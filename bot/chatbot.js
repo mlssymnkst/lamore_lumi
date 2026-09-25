@@ -689,8 +689,8 @@ const BOT_RESPONSES = {
 
   'ajuda': () =>
     'Comandos disponíveis:\n' +
-    '• "Insumo (nome do insumo)" – procurar produto\n' +
     '• "pedido novo" – criar pedido\n' +
+    '• "buscar [nome]" – procurar produtos\n' +
     '• "resumo" – ver itens do orçamento\n' +
     '• "produtos" – listar produtos',
 
