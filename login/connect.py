@@ -19,6 +19,9 @@ from backend.bot_routes import bot_bp
 app.secret_key = 'segredo123'
 app.register_blueprint(bot_bp)
 
+from backend.faturamento_routes import faturamento_bp
+app.register_blueprint(faturamento_bp)
+
 # conexão com PostgreSQL
 conn = psycopg2.connect(
     "postgresql://neondb_owner:npg_i7CL3QSUDstA@ep-lively-field-aqff4e2r-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"#senha do seu postgree 1234
