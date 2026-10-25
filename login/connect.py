@@ -7,7 +7,7 @@ import psycopg2, os
 import sys
 from flask_cors import CORS
 
-#da linha 6 ate a 23 são ccomandos para rodar o bot 
+#da linha 6 ate a 23 são ccomandos para rodar o bot, Faturamento e dashboard
 
 app = Flask(__name__)
 
@@ -21,6 +21,9 @@ app.register_blueprint(bot_bp)
 
 from backend.faturamento_routes import faturamento_bp
 app.register_blueprint(faturamento_bp)
+
+from backend.dashboard_routes import dashboard_bp
+app.register_blueprint(dashboard_bp)
 
 # conexão com PostgreSQL
 conn = psycopg2.connect(

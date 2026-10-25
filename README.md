@@ -32,7 +32,7 @@ Para isso, o projeto implementa:
 
 - **Banco de dados:** PostgreSQL
 - **Backend / ETL:** Python, Pandas
-- **Aplicação web:** Streamlit, HTML, CSS, JavaScript
+- **Aplicação web:** Flask, HTML, CSS, JavaScript
 
 ## Status
 

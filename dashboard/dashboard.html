@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f0f0f2">
+    <title>Dashboard LaMore | Visão geral</title>
+    <link rel="stylesheet" href="/dashboard/assets/dashboard.css">
+</head>
+<body>
+    <main class="stage" aria-label="Dashboard de orçamentos">
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+
+        <nav class="nav-hotspots" aria-label="Navegação principal">
+            <a href="/" aria-label="Início" title="Início"></a>
+            <a href="/dashboard" aria-label="Dashboard" aria-current="page" title="Dashboard"></a>
+        </nav>
+
+        <details class="dashboard-navigation">
+            <summary aria-label="Abrir navegação"></summary>
+            <nav class="dashboard-navigation-panel" aria-label="Ir para outra tela">
+                <a href="/insumos"><span aria-hidden="true">▦</span>Insumos</a>
+                <a href="/chatbot"><span aria-hidden="true">✉</span>Chatbot</a>
+                <a href="/faturamento"><span aria-hidden="true">▥</span>Faturamento</a>
+                <a href="/dashboard" aria-current="page"><span aria-hidden="true">▤</span>Dashboard</a>
+            </nav>
+        </details>
+
+        <section class="visual visual-line" aria-label="Orçamentos fechados versus negociação">
+            <svg id="chart-monthly" viewBox="0 0 900 230" role="img"
+                 aria-label="Gráfico mensal de orçamentos"></svg>
+        </section>
+
+        <section class="visual visual-products" aria-label="Produtos com mais saída">
+            <svg id="chart-products" viewBox="0 0 430 205" role="img"
+                 aria-label="Gráfico de produtos mais cotados"></svg>
+        </section>
+
+        <section class="visual visual-regions" aria-label="Análise de demanda por região">
+            <svg id="chart-regions" viewBox="0 0 270 210" role="img"
+                 aria-label="Mapa de orçamentos por região"></svg>
+        </section>
+
+        <section class="visual visual-categories" aria-label="Categoria mais orçada">
+            <svg id="chart-categories" viewBox="0 0 370 210" role="img"
+                 aria-label="Gráfico de categorias mais orçadas"></svg>
+        </section>
+
+        <div class="kpi kpi-closed" id="kpi-closed">—</div>
+        <div class="kpi kpi-waste" id="kpi-waste">—</div>
+        <div class="kpi kpi-negotiation" id="kpi-negotiation">—</div>
+        <div class="kpi kpi-value" id="kpi-value">—</div>
+    </main>
+    <script src="/dashboard/assets/dashboard.js" defer></script>
+</body>
+</html>

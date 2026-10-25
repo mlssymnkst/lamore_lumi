@@ -1,0 +1,252 @@
+:root {
+    color-scheme: light;
+    font-family: Arial, Helvetica, sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    overflow: hidden;
+    background: #e6e6e8;
+}
+
+.stage {
+    position: relative;
+    width: min(100vw, 177.7778vh);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #f0f0f2 url("/dashboard/assets/dashboard-bg.png") center / 100% 100% no-repeat;
+}
+
+.stage::before {
+    position: absolute;
+    top: 39%;
+    left: 2.25%;
+    width: 4.15%;
+    height: 5.7%;
+    background: linear-gradient(180deg, #d7677f 0%, #d96b7f 50%, #da6d7f 100%);
+    content: "";
+    pointer-events: none;
+}
+
+.visual {
+    position: absolute;
+    overflow: hidden;
+}
+
+.visual svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.visual-line {
+    left: 10.5%;
+    top: 19.1%;
+    width: 69.8%;
+    height: 31.6%;
+}
+
+.visual-products {
+    left: 10.5%;
+    top: 63.5%;
+    width: 33.6%;
+    height: 28.1%;
+    overflow-y: auto;
+    scrollbar-color: #c8c5c7 transparent;
+    scrollbar-width: thin;
+}
+
+.visual-regions {
+    left: 46.4%;
+    top: 64.2%;
+    width: 21.3%;
+    height: 27.8%;
+}
+
+.visual-categories {
+    left: 69.8%;
+    top: 65.8%;
+    width: 29.1%;
+    height: 27.1%;
+}
+
+.kpi {
+    position: absolute;
+    right: 1.2%;
+    width: 11.5%;
+    color: #29272a;
+    font-size: clamp(14px, 2vw, 26px);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.kpi-closed {
+    top: 18.2%;
+}
+
+.kpi-waste {
+    top: 27%;
+}
+
+.kpi-negotiation {
+    top: 37.2%;
+}
+
+.kpi-value {
+    top: 48.5%;
+}
+
+.status {
+    position: absolute;
+    z-index: 2;
+    top: 2.4%;
+    right: 2.1%;
+    max-width: 29%;
+    padding: 0;
+    color: #6d5660;
+    font-size: clamp(7px, 0.8vw, 10px);
+    text-align: right;
+}
+
+.status:empty {
+    display: none;
+}
+
+.nav-hotspots {
+    position: absolute;
+    top: 20%;
+    left: 2.25%;
+    display: grid;
+    width: 4.15%;
+    height: 19.4%;
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.dashboard-navigation {
+    position: absolute;
+    z-index: 5;
+    top: 13.4%;
+    left: 2.1%;
+    width: 4.5%;
+    height: 5.2%;
+}
+
+.dashboard-navigation summary {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    list-style: none;
+}
+
+.dashboard-navigation summary::-webkit-details-marker {
+    display: none;
+}
+
+.dashboard-navigation summary:focus-visible {
+    border-radius: 8px;
+    outline: 2px solid #7d1940;
+    outline-offset: -2px;
+}
+
+.dashboard-navigation-panel {
+    position: absolute;
+    top: -35%;
+    left: 115%;
+    display: grid;
+    min-width: 155px;
+    gap: 3px;
+    padding: 8px;
+    border: 1px solid #eadde2;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(55 31 41 / 18%);
+}
+
+.dashboard-navigation-panel a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    color: #51474c;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.dashboard-navigation-panel a:hover,
+.dashboard-navigation-panel a[aria-current="page"] {
+    background: #f7e9ee;
+    color: #a82d5b;
+}
+
+.dashboard-navigation-panel a span {
+    width: 16px;
+    color: #bd426b;
+    font-size: 16px;
+    text-align: center;
+}
+
+.nav-hotspots a {
+    display: block;
+    border-radius: 50%;
+}
+
+.nav-hotspots a:focus-visible {
+    outline: 2px solid #7d1940;
+    outline-offset: -4px;
+}
+
+.axis {
+    stroke: #d8d7da;
+    stroke-width: 1;
+}
+
+.grid-line {
+    stroke: #ecebed;
+    stroke-width: 1;
+    stroke-dasharray: 1.5 4;
+}
+
+.chart-label {
+    fill: #777278;
+    font-size: 12px;
+}
+
+.chart-value {
+    fill: #4b464a;
+    font-size: 11px;
+}
+
+.percentage-label {
+    font-size: 10px;
+}
+
+.empty-label {
+    fill: #a8a2a6;
+    font-size: 12px;
+}
+
+@media (max-aspect-ratio: 16 / 9) {
+    body {
+        min-height: 100dvh;
+    }
+}

@@ -7,6 +7,7 @@ from routes.produtos import produtos_bp
 from routes.tipos_produto import tipos_produto_bp
 from routes.itens_orcamento import itens_orcamento_bp
 from routes.modelos_personalizados import modelos_personalizados_bp
+from dashboard_routes import dashboard_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -19,6 +20,7 @@ app.register_blueprint(produtos_bp)
 app.register_blueprint(tipos_produto_bp)
 app.register_blueprint(itens_orcamento_bp)
 app.register_blueprint(modelos_personalizados_bp)
+app.register_blueprint(dashboard_bp)
 
 @app.route("/")
 def home():
