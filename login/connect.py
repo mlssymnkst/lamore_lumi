@@ -25,6 +25,9 @@ app.register_blueprint(faturamento_bp)
 from backend.dashboard_routes import dashboard_bp
 app.register_blueprint(dashboard_bp)
 
+from backend.avaliacoes_routes import avaliacoes_bp
+app.register_blueprint(avaliacoes_bp)
+
 # conexão com PostgreSQL
 conn = psycopg2.connect(
     "postgresql://neondb_owner:npg_i7CL3QSUDstA@ep-lively-field-aqff4e2r-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"#senha do seu postgree 1234
