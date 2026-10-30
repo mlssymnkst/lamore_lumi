@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avaliações L'amore</title>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+<link rel="stylesheet" href="/faturamento/faturamento.css"><link rel="stylesheet" href="/avaliacoes/avaliacoes.css"></head><body>
+<div class="icon-sidebar">
+<button class="icon-btn" data-tooltip="Menu" type="button"><span class="material-icons">menu</span></button>
+<button class="icon-btn" data-tooltip="Insumos" onclick="location.href='/insumos'"><span class="material-icons">inventory_2</span></button>
+<button class="icon-btn active" data-tooltip="Avaliações" onclick="location.href='/avaliacoes'"><span class="material-icons">reviews</span></button>
+<button class="icon-btn" data-tooltip="Faturamento" onclick="location.href='/faturamento'"><span class="material-symbols-outlined">bar_chart</span></button>
+<button class="icon-btn " data-tooltip="Dashboard" onclick="location.href='/dashboard-avaliacoes'"><span class="material-icons">dashboard</span></button>
+</div><main class="main">
+<header class="topbar"><div class="titulo-area"><img src="/images/logo%20redondo.png" class="logo-header" alt="Logo L’amore"><span class="titulo">Avaliações L'amore</span></div>
+<div class="topbar-actions"><div class="search-container"><input type="text" placeholder="Pesquisar pedido..." id="searchInput" autocomplete="off"><button class="topbar-icon-btn" type="button"><span class="material-icons">search</span></button></div></div></header>
+<h2 class="filtros-titulo">Controle de Reclamações <span id="demo"></span></h2>
+<p class="sub">Gerencie as avaliações negativas e acompanhe as resoluções.</p>
+<section class="toolbar"><label class="campo">Status<select id="fStatus"></select></label><label class="campo">Nota<select id="fNota"><option value="neg">Somente negativas (1–3)</option><option value="all">Todas</option><option value="1">1 estrela</option><option value="2">2 estrelas</option><option value="3">3 estrelas</option></select></label><label class="campo">Estado (UF)<select id="fUf"></select></label><label class="campo">Ordenar<select id="fOrd"><option value="rec">Mais recentes</option><option value="ant">Mais antigas</option><option value="nota">Menor nota</option></select></label></section>
+<p class="legenda" id="resumo"></p><section class="lista" id="lista"></section>
+</main><div id="toast" class="toast"></div>
+<script src="/avaliacoes/avaliacoes-comum.js"></script><script src="/avaliacoes/avaliacoes.js"></script></body></html>
