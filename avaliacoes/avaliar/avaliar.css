@@ -1,0 +1,94 @@
+/* Cores e tema do formulário. */
+:root {
+  color-scheme: light; 
+  --pink: #ed506a; 
+  --pink-dark: #d94360; 
+  --ink: #252538; 
+  --muted: #89899f; 
+  --line: #e8e8ef; 
+  --surface: #f3f3f6; 
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; 
+  min-height: 100vh; 
+  background: #f7f7fa; 
+  color: var(--ink); 
+  font: 15px "Quicksand", sans-serif; 
+}
+button, textarea, select, input {
+   font: inherit;
+  }
+/* Layout principal. */
+.page {
+  width: min(100% - 32px, 620px);
+   margin: 0 auto;
+   padding: 28px 0 36px;
+}
+.brand { display: flex; align-items: center; justify-content: center; margin: 0 0 20px; }
+.brand-logo { display: block; width: 76px; height: 76px; object-fit: contain; }
+/* Cartões e mensagens. */
+.card, .message-card { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 24px; box-shadow: 0 8px 26px #2525380a; }
+.message-card { color: var(--muted); text-align: center; }
+.message-card.error { color: #b4233b; border-color: #ffc9d1; }
+[hidden] { display: none !important; }
+.eyebrow, fieldset legend, .field-label { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+h1 { margin: 7px 0; font-size: clamp(22px, 5vw, 28px); }
+.muted { color: var(--muted); }
+/* Dados do pedido. */
+.order { display: flex; align-items: center; gap: 13px; margin: 24px 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+.product-icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 8px; background: #fff0f2; color: var(--pink); font-size: 25px; }
+.order strong, .order small { display: block; }
+.order small { margin-top: 3px; color: var(--muted); }
+.order-tag { margin-left: auto; padding: 5px 10px; border-radius: 20px; background: #e9f8ef; color: #378153; font-size: 11px; }
+.state-label { margin-top: 20px; }
+#customer-state { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); }
+/* Nota e resposta. */
+.rating { margin: 22px 0; padding: 0; border: 0; text-align: center; }
+.rating legend { width: 100%; }
+.stars { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
+.stars button { padding: 0 2px; border: 0; background: none; color: #e2e2e8; cursor: pointer; font-size: 38px; line-height: 1.15; }
+.stars button.active, .selected-stars { color: var(--pink); }
+.stars button:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid #ed506a55; outline-offset: 2px; }
+.rating .muted { margin: 5px 0 0; font-size: 13px; }
+/* Botões e escolhas da avaliação. */
+.primary { width: 100%; margin-top: 14px; padding: 13px 18px; border: 0; border-radius: 10px; background: var(--pink); color: white; cursor: pointer; font-weight: 700; transition: background .15s, opacity .15s; }
+.primary:hover:not(:disabled) { background: var(--pink-dark); }
+.primary:disabled { background: #e6e6ec; color: #aaaabc; cursor: not-allowed; }
+.rating-summary { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.selected-stars { font-size: 21px; letter-spacing: 1px; white-space: nowrap; }
+.text-button { margin-left: auto; padding: 4px; border: 0; background: none; color: var(--pink); text-decoration: underline; cursor: pointer; }
+/* Opções de problemas e controles complementares. */
+.issue-group { margin: 0 0 18px; padding: 0; border: 0; }
+.issue-group legend { margin-bottom: 8px; }
+.issue-group p { margin: 0 0 9px; font-size: 13px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips label { cursor: pointer; }
+.chips input { position: absolute; opacity: 0; }
+.chips span { display: inline-block; padding: 8px 13px; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); color: var(--muted); font-size: 13px; }
+.chips input:checked + span { border-color: var(--pink); background: #fff0f2; color: var(--pink-dark); }
+.chips input:focus-visible + span { outline: 3px solid #ed506a55; }
+.quantity-question { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-weight: 600; }
+.quantity-question select { padding: 8px 12px; border: 1px solid var(--line); border-radius: 20px; color: var(--muted); background: white; }
+/* Campos de texto e mensagens de validação. */
+.field-label { display: block; margin: 20px 0 9px; }
+.field-label span { font-weight: 500; letter-spacing: 0; }
+.field-label .required { color: var(--pink); font-weight: 700; }
+textarea { display: block; width: 100%; resize: vertical; padding: 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); }
+textarea::placeholder { color: #9999a5; }
+#comment.required { border-color: #ffabb8; }
+.field-help { margin: 6px 0; color: var(--muted); font-size: 12px; }
+.counter { display: flex; justify-content: space-between; min-height: 19px; margin-top: 3px; color: #aaaabc; font-size: 12px; }
+.validation { color: #e34059; font-size: 12px; }
+input[type="file"] { width: 100%; padding: 10px; border: 1px dashed #d8d8e2; border-radius: 9px; background: var(--surface); color: var(--muted); }
+/* Confirmação de envio e adaptação para telas pequenas. */
+.success { padding: 40px 24px; text-align: center; }
+.success-icon { display: grid; width: 54px; height: 54px; margin: 0 auto 15px; place-items: center; border-radius: 50%; background: #e8f7ed; color: #368353; font-size: 28px; font-weight: 700; }
+footer { padding: 18px 0 0; color: #a0a0ad; text-align: center; font-size: 12px; }
+@media (max-width: 520px) {
+  .page { width: min(100% - 20px, 620px); padding-top: 18px; }
+  .card, .message-card { padding: 18px; }
+  .stars button { font-size: 34px; }
+  .rating-summary { gap: 7px; }
+  .selected-stars { font-size: 18px; }
+}

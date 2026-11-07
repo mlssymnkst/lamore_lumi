@@ -1,12 +1,14 @@
 let TODAS = [];
 const f = { ano:$('fAno'), uf:$('fUf'), cat:$('fCat'), q:$('searchInput') };
 
+// Filtra avaliações por ano, estado, categoria e busca.
 function filtradas() {
   const q = f.q.value.trim().toLowerCase();
   return TODAS.filter(a => a.data.startsWith(f.ano.value) && (f.uf.value==='Todos'||a.uf===f.uf.value) &&
     (f.cat.value==='Todos'||a.categoria===f.cat.value) &&
     (!q || [a.id,a.cliente,a.comentario,a.categoria].some(v=>String(v).toLowerCase().includes(q))));
 }
+// Atualiza os indicadores e gráficos.
 function renderCards(l) {
   const n=l.length, media=n?l.reduce((s,a)=>s+a.nota,0)/n:0, neg=l.filter(a=>a.nota<=3);
   const itens=[['star',n?media.toFixed(1).replace('.',','):'—','Nota média','rosa'],
@@ -38,17 +40,24 @@ function renderGraficos(l) {
   Plotly.react('gMotivos',[{type:'bar',orientation:'h',x:e.map(x=>x[1]),y:e.map(x=>x[0]),marker:{color:COR.rosaForte}}],
     {...base,height:300,margin:{l:190,r:10,t:10,b:30},xaxis:{gridcolor:COR.begeEscuro,dtick:1}},CFG_PLOTLY);
 }
+// Renderiza a tabela e atualiza os dados da tela.
 function renderTabela(l) {
   const s=[...l].sort((a,b)=>b.data.localeCompare(a.data));
   $('contador').textContent=s.length?`(${s.length})`:'';
-  $('tbody').innerHTML=s.length?s.map(a=>{const st=statusDe(a);return `<tr><td>${a.id}</td><td>${escapar(a.cliente)}</td><td>${escapar(a.categoria)}</td><td><span class="stars">${estrelas(a.nota)}</span></td><td title="${escapar(a.comentario)}">${escapar(a.comentario.length>40?a.comentario.slice(0,37)+'…':a.comentario)}</td><td>${fmtData(a.data)}</td><td>${a.nota<=3?`<span class="selo ${classeStatus(st)}">${st}</span>`:'—'}</td></tr>`}).join('')
+  $('tbody').innerHTML=s.length?s.map(a=>{const st=statusDe(a);return `<tr><td>${escapar(a.id)}</td><td>${escapar(a.cliente)} ${a.origem==='demo'?'<span class="selo pendente">Demonstração</span>':''}${a.origem==='historico'?'<span class="selo pendente">Histórico</span>':''}</td><td>${escapar(a.categoria)}</td><td><span class="stars">${estrelas(a.nota)}</span></td><td title="${escapar(a.comentario)}">${escapar(a.comentario.length>40?a.comentario.slice(0,37)+'…':a.comentario)}</td><td>${fmtData(a.data)}</td><td>${a.origem==='historico'?'<span class="selo pendente">Histórica</span>':a.nota<=3?`<span class="selo ${classeStatus(st)}">${st}</span>`:'—'}</td></tr>`}).join('')
     :'<tr><td colspan="7"><div class="vazio">Nenhuma avaliação encontrada.</div></td></tr>';
 }
 function render(){const l=filtradas();renderCards(l);renderGraficos(l);renderMapa(l);renderTabela(l);}
+// Carrega as avaliações e inicializa filtros e visualizações.
 async function iniciar(){
   $('cards').innerHTML='<div class="skeleton"></div>'.repeat(5);
-  const {lista,demo}=await buscarAvaliacoes(); TODAS=lista;
-  if(demo) $('demo').innerHTML='<span class="demo-tag">dados de demonstração</span>';
+  try {
+    TODAS=await buscarAvaliacoes();
+  } catch (error) {
+    $('cards').innerHTML=`<div class="vazio">${escapar(error.message)}</div>`;
+    $('tbody').innerHTML=`<tr><td colspan="7"><div class="vazio">${escapar(error.message)}</div></td></tr>`;
+    return;
+  }
   const anos=[...new Set(TODAS.map(a=>a.data.slice(0,4)))].sort().reverse();
   f.ano.innerHTML=anos.map(a=>`<option>${a}</option>`).join('');
   preencher(f.uf,[...new Set(TODAS.map(a=>a.uf))].sort());
@@ -65,6 +74,7 @@ const CHAVES=['sigla','SIGLA','UF','uf','abbrev','id'];
 let geoPromise=null, seqMapa=0;
 function carregarGeo(){ if(!geoPromise) geoPromise=fetch(GEOJSON_URL).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).catch(e=>{geoPromise=null;throw e}); return geoPromise; }
 function centro(feat){const lo=[],la=[];(function c(a){if(typeof a[0]==='number'){lo.push(a[0]);la.push(a[1])}else a.forEach(c)})(feat.geometry.coordinates);return[(Math.min(...lo)+Math.max(...lo))/2,(Math.min(...la)+Math.max(...la))/2];}
+// Usa barras como alternativa quando os dados geográficos falham.
 function barrasEstados(v,txt){
   const e=UFS.filter(u=>v[u]!=null&&v[u]>0).sort((a,b)=>v[a]-v[b]);
   if(!e.length) return vazio($('gMapa'),'Sem avaliações para os filtros selecionados.');

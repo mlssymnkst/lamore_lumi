@@ -29,8 +29,19 @@
         </details>
 
         <section class="visual visual-line" aria-label="Orçamentos fechados versus negociação">
+            <label class="year-filter" for="year-filter">
+                Ano
+                <select id="year-filter" aria-label="Selecionar ano do relatório">
+                    <option value="2026" selected>2026</option>
+                    <option value="2025">2025</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                </select>
+            </label>
             <svg id="chart-monthly" viewBox="0 0 900 230" role="img"
-                 aria-label="Gráfico mensal de orçamentos"></svg>
+                 aria-label="Gráfico temporal mensal de orçamentos por ano"></svg>
         </section>
 
         <section class="visual visual-products" aria-label="Produtos com mais saída">
@@ -49,7 +60,7 @@
         </section>
 
         <div class="kpi kpi-closed" id="kpi-closed">—</div>
-        <div class="kpi kpi-waste" id="kpi-waste">—</div>
+        <div class="kpi kpi-waste" id="kpi-waste" title="Valor percentual informado manualmente; não calculado pelo dataset" aria-label="Média de desperdício informada manualmente">—</div>
         <div class="kpi kpi-negotiation" id="kpi-negotiation">—</div>
         <div class="kpi kpi-value" id="kpi-value">—</div>
     </main>

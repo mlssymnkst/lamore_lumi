@@ -1,9 +1,9 @@
 #arrrumar o nome do usuario, conexões entre a tela e banconosql
 
 from flask import Flask, request, redirect, send_from_directory, session, jsonify
-from pymongo import MongoClient
 from bson import ObjectId
-import psycopg2, os
+from psycopg2 import Error as PsycopgError
+import os
 import sys
 from flask_cors import CORS
 
@@ -28,18 +28,8 @@ app.register_blueprint(dashboard_bp)
 from backend.avaliacoes_routes import avaliacoes_bp
 app.register_blueprint(avaliacoes_bp)
 
-# conexão com PostgreSQL
-conn = psycopg2.connect(
-    "postgresql://neondb_owner:npg_i7CL3QSUDstA@ep-lively-field-aqff4e2r-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"#senha do seu postgree 1234
-)
-
-# conexão com o mongodb
-# conexão MongoDB
-mongo_client = MongoClient("mongodb://localhost:27017/")
-
-mongo_db = mongo_client["SOA"]
-
-colecao_insumos = mongo_db["insumos"]
+from backend.banco import insumos_collection as colecao_insumos
+from backend.warehouse import WarehouseNotConfigured, conectar
 
 
 @app.route('/')
@@ -120,12 +110,22 @@ def login_session():
     usuario = request.form['login']
     senha = request.form['senha']
 
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT * FROM entrada WHERE usuario = %s AND senha = %s",
-        (usuario, senha)
-    )
-    result = cursor.fetchone()
+    try:
+        conexao = conectar()
+        try:
+            with conexao.cursor() as cursor:
+                cursor.execute(
+                    "SELECT 1 FROM entrada WHERE usuario = %s AND senha = %s",
+                    (usuario, senha)
+                )
+                result = cursor.fetchone()
+        finally:
+            conexao.close()
+    except WarehouseNotConfigured as erro:
+        return jsonify({"erro": str(erro)}), 503
+    except PsycopgError:
+        app.logger.exception("Falha ao validar usuário no PostgreSQL.")
+        return jsonify({"erro": "Não foi possível validar o login no PostgreSQL."}), 503
 
     if result:
         session['usuario'] = usuario  #  AQUI salva 
@@ -188,7 +188,6 @@ def adicionar_insumo():
 #mongodb dos produtos da tela de insumos
 @app.route('/api/insumos')
 def api_insumos():
-
     produtos = []
 
     contador = 1
@@ -287,7 +286,5 @@ def editar_insumos():
     })
 
 
-# MUDAR A PORTA DO CONNECT PARA NAO DAR ERRO DO LOCALHOST
-
 if __name__ == "__main__":
-    app.run()
+    app.run(port=5000, debug=False)

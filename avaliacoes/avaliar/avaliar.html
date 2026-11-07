@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="same-origin">
+  <title>Avalie seu pedido | L'amore</title>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/avaliacoes/avaliar/avaliar.css">
+</head>
+<body>
+  <main class="page">
+    <header class="brand"><img class="brand-logo" src="/images/logo%20redondo.png" alt="L'amore Estúdio"></header>
+    <section id="loading" class="message-card" aria-live="polite">Carregando seu pedido...</section>
+    <section id="error" class="message-card error" role="alert" hidden></section>
+
+    <section id="rating-step" class="card" hidden>
+      <p class="eyebrow">PEDIDO <span id="order-number"></span></p>
+      <h1>Como foi sua experiência?</h1>
+      <p class="muted">Sua opinião ajuda a L'amore a melhorar cada detalhe.</p>
+      <article class="order">
+        <div class="product-icon" aria-hidden="true">♡</div>
+        <div><strong id="product-name"></strong><small id="customer-name"></small></div>
+        <span class="order-tag">Entregue</span>
+      </article>
+      <label class="field-label state-label" for="customer-state">ESTADO ONDE O PEDIDO FOI ENTREGUE (UF) <span class="required">*</span></label>
+      <select id="customer-state" name="uf" required>
+        <option value="">Selecione o estado</option>
+        <option value="AC">Acre (AC)</option>
+        <option value="AL">Alagoas (AL)</option>
+        <option value="AP">Amapá (AP)</option>
+        <option value="AM">Amazonas (AM)</option>
+        <option value="BA">Bahia (BA)</option>
+        <option value="CE">Ceará (CE)</option>
+        <option value="DF">Distrito Federal (DF)</option>
+        <option value="ES">Espírito Santo (ES)</option>
+        <option value="GO">Goiás (GO)</option>
+        <option value="MA">Maranhão (MA)</option>
+        <option value="MT">Mato Grosso (MT)</option>
+        <option value="MS">Mato Grosso do Sul (MS)</option>
+        <option value="MG">Minas Gerais (MG)</option>
+        <option value="PA">Pará (PA)</option>
+        <option value="PB">Paraíba (PB)</option>
+        <option value="PR">Paraná (PR)</option>
+        <option value="PE">Pernambuco (PE)</option>
+        <option value="PI">Piauí (PI)</option>
+        <option value="RJ">Rio de Janeiro (RJ)</option>
+        <option value="RN">Rio Grande do Norte (RN)</option>
+        <option value="RS">Rio Grande do Sul (RS)</option>
+        <option value="RO">Rondônia (RO)</option>
+        <option value="RR">Roraima (RR)</option>
+        <option value="SC">Santa Catarina (SC)</option>
+        <option value="SP">São Paulo (SP)</option>
+        <option value="SE">Sergipe (SE)</option>
+        <option value="TO">Tocantins (TO)</option>
+      </select>
+      <p class="field-help">Usaremos essa informação para agrupar as avaliações no painel por estado.</p>
+      <p id="state-error" class="validation" role="alert"></p>
+      <fieldset class="rating">
+        <legend>Sua nota</legend>
+        <div id="stars" class="stars" role="radiogroup" aria-label="Nota do pedido">
+          <button type="button" data-rating="1" role="radio" aria-label="1 estrela">★</button>
+          <button type="button" data-rating="2" role="radio" aria-label="2 estrelas">★</button>
+          <button type="button" data-rating="3" role="radio" aria-label="3 estrelas">★</button>
+          <button type="button" data-rating="4" role="radio" aria-label="4 estrelas">★</button>
+          <button type="button" data-rating="5" role="radio" aria-label="5 estrelas">★</button>
+        </div>
+        <p id="rating-hint" class="muted">Toque nas estrelas para avaliar</p>
+      </fieldset>
+      <button id="continue-rating" class="primary" type="button" disabled>Continuar</button>
+    </section>
+
+    <section id="details-step" class="card" hidden>
+      <div class="rating-summary">
+        <span id="selected-stars" class="selected-stars"></span>
+        <span id="selected-rating" class="muted"></span>
+        <button id="change-rating" class="text-button" type="button">Alterar</button>
+      </div>
+      <form id="review-form">
+        <div id="issues" hidden>
+          <fieldset class="issue-group">
+            <legend>ATENDIMENTO</legend>
+            <p class="muted">Selecione os problemas encontrados:</p>
+            <div class="chips">
+              <label><input type="checkbox" name="problemas" value="Tempo de resposta"><span>Tempo de resposta</span></label>
+              <label><input type="checkbox" name="problemas" value="Tom inadequado"><span>Tom inadequado</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="issue-group">
+            <legend>PRODUTOS</legend>
+            <div class="chips">
+              <label><input type="checkbox" name="problemas" value="Qualidade dos materiais"><span>Qualidade dos materiais</span></label>
+              <label><input type="checkbox" name="problemas" value="Quebrado"><span>Quebrado</span></label>
+              <label><input type="checkbox" name="problemas" value="Rasgado"><span>Rasgado</span></label>
+              <label><input type="checkbox" name="problemas" value="Danificado"><span>Danificado</span></label>
+            </div>
+            <label class="quantity-question">Quantidade estava correta?
+              <select name="quantidade_correta">
+                <option value="">Selecione</option>
+                <option value="sim">Sim</option>
+                <option value="nao">Não</option>
+              </select>
+            </label>
+          </fieldset>
+          <fieldset class="issue-group">
+            <legend>ENTREGA</legend>
+            <div class="chips">
+              <label><input type="checkbox" name="problemas" value="Tempo de entrega"><span>Tempo de entrega</span></label>
+              <label><input type="checkbox" name="problemas" value="Estado da embalagem"><span>Estado da embalagem</span></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <label id="comment-label" class="field-label" for="comment"></label>
+        <textarea id="comment" name="comentario" maxlength="500" rows="4"></textarea>
+        <p id="comment-help" class="field-help"></p>
+        <div class="counter"><span id="comment-error" class="validation"></span><span><span id="comment-count">0</span>/500</span></div>
+
+        <div id="recommendation-section">
+          <label class="field-label" for="recommendation">RECOMENDARIA A EMPRESA? <span>(OPCIONAL)</span></label>
+          <textarea id="recommendation" name="recomendacao" maxlength="500" rows="3" placeholder="Conte o que você mais gostou..."></textarea>
+          <div class="counter"><span></span><span><span id="recommendation-count">0</span>/500</span></div>
+        </div>
+
+        <div id="photo-section" hidden>
+          <label class="field-label" for="photo">FOTOS <span class="required">*</span></label>
+          <input id="photo" name="foto" type="file" accept="image/png,image/jpeg,image/webp">
+          <p class="field-help">Envie ao menos uma foto do problema (PNG, JPG ou WebP, até 5 MB).</p>
+          <p id="photo-error" class="validation"></p>
+        </div>
+
+        <p id="form-error" class="validation" role="alert"></p>
+        <button id="submit-review" class="primary" type="submit">Enviar avaliação</button>
+      </form>
+    </section>
+
+    <section id="success-step" class="card success" hidden>
+      <div class="success-icon" aria-hidden="true">✓</div>
+      <h1>Obrigado pela avaliação!</h1>
+      <p class="muted">Seu feedback foi enviado para a equipe L'amore.</p>
+      <p id="success-order" class="muted"></p>
+    </section>
+    <footer>Seu feedback é tratado com cuidado pela equipe L'amore.</footer>
+  </main>
+  <script src="/avaliacoes/avaliar/avaliar.js"></script>
+</body>
+</html>

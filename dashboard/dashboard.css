@@ -57,10 +57,37 @@ body {
 }
 
 .visual-line {
+    position: absolute;
     left: 10.5%;
     top: 19.1%;
     width: 69.8%;
     height: 31.6%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-color: #c8c5c7 transparent;
+    scrollbar-width: thin;
+}
+
+.year-filter {
+    position: absolute;
+    z-index: 1;
+    top: 2px;
+    right: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #777278;
+    font-size: clamp(9px, 0.9vw, 12px);
+}
+
+.year-filter select {
+    padding: 4px 7px;
+    border: 1px solid #d8c9ce;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 90%);
+    color: #5b3542;
+    font: inherit;
+    cursor: pointer;
 }
 
 .visual-products {
@@ -231,9 +258,20 @@ body {
     font-size: 12px;
 }
 
+.chart-year-label {
+    fill: #5f5960;
+    font-size: 10px;
+    font-weight: 700;
+}
+
 .chart-value {
     fill: #4b464a;
     font-size: 11px;
+}
+
+.chart-hit-area {
+    fill: transparent;
+    cursor: help;
 }
 
 .percentage-label {

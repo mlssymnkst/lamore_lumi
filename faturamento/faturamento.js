@@ -121,7 +121,7 @@ function renderResultadoBusca(d) {
 function renderCards(c) {
     const itens = [
         ['trending_up', String(c.total_pedidos), 'Número de pedidos', 'verde'],
-        ['priority_high', String(c.atrasados), 'Em atraso', 'vermelho'],
+        ['priority_high', String(c.atrasados), 'Pedidos com atraso de entrega', 'vermelho'],
         ['schedule', String(c.pendentes), 'Pendentes', 'amarelo'],
         ['payments', moeda(c.faturamento_total), 'Faturamento total', 'azul'],
         ['my_location', c.estado_maior, 'Estado com maior valor', 'rosa'],

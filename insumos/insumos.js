@@ -23,7 +23,11 @@ async function carregarProdutos() {
 
         const resposta = await fetch('/api/insumos');
 
-        produtos = await resposta.json();
+        const dados = await resposta.json();
+        if (!resposta.ok) {
+            throw new Error(dados.erro || 'Não foi possível carregar os produtos.');
+        }
+        produtos = dados;
 
         produtosFiltrados = [...produtos];
 
@@ -31,7 +35,8 @@ async function carregarProdutos() {
 
     } catch (erro) {
 
-        console.log("Erro ao carregar produtos:", erro);
+        const container = document.getElementById("productList");
+        container.textContent = erro.message || "Não foi possível carregar os produtos.";
 
     }
 }

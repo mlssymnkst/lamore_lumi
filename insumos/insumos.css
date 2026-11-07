@@ -189,11 +189,12 @@ body {
 
 .table-header { /* TA FODA PRA ALINHAR */ /*alinhei */
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr 1fr; 
+  grid-template-columns: 80px minmax(0, 1fr) 120px 120px 60px;
   padding: 15px;
   border-radius: 12px;
   border: 2px solid black;
   font-weight: 600;
+  text-align: center;
 }
 
 
@@ -258,13 +259,14 @@ body {
 
 .row {
     display: grid;
-    grid-template-columns: 80px 1fr 120px 120px 60px;
+    grid-template-columns: 80px minmax(0, 1fr) 120px 120px 60px;
     align-items: center;
     gap: 10px;
     padding: 18px;
     margin-top: 12px;
     background: #CFCFCF;
     border-radius: 16px;
+    text-align: center;
 }
 
 

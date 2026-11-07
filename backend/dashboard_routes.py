@@ -2,16 +2,12 @@
 import os
 import unicodedata
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date
 
-from flask import Blueprint, jsonify, send_from_directory
-from pymongo.errors import PyMongoError
+from flask import Blueprint, current_app, jsonify, request, send_from_directory
+from psycopg2 import Error as PsycopgError
 
-from backend.banco import (
-    itens_orcamento_collection,
-    orcamentos_collection,
-    produtos_collection,
-)
+from backend.warehouse import WarehouseNotConfigured, consultar
 
 dashboard_bp = Blueprint("dashboard", __name__)
 PASTA_DASHBOARD = os.path.abspath(
@@ -48,6 +44,14 @@ STATUS_NEGOCIACAO = {
     "aberto", "aberta", "aguardando", "em andamento", "em negociacao",
     "negociacao", "orcamento", "pendente",
 }
+MEDIA_DESPERDICIO_POR_ANO = {
+    2021: 4.8,
+    2022: 5.3,
+    2023: 5.7,
+    2024: 10.0,
+    2025: 6.3,
+    2026: 5.2,
+}
 
 
 def _normalizar(valor):
@@ -64,61 +68,11 @@ def _sigla_estado(valor):
     return UF_POR_NOME.get(estado)
 
 
-def _valor(documento, *campos):
-    for campo in campos:
-        valor = documento.get(campo)
-        if valor is not None:
-            return valor
-    return None
-
-
-def _data(documento):
-    valor = _valor(
-        documento, "data_orcamento", "data_criacao", "dataOrcamento", "criado_em"
-    )
-    if isinstance(valor, datetime):
-        return valor.date()
-    if isinstance(valor, date):
-        return valor
-    if isinstance(valor, str):
-        try:
-            return date.fromisoformat(valor[:10])
-        except ValueError:
-            try:
-                return datetime.strptime(valor, "%d/%m/%Y").date()
-            except ValueError:
-                return None
-    return None
-
-
-def _classificar(documento):
-    status = _normalizar(_valor(documento, "status", "situacao", "estado_orcamento"))
-    if status in STATUS_FECHADOS:
-        return "fechado"
-    if status in STATUS_NEGOCIACAO or not status:
-        return "negociacao"
-    return "outro"
-
-
 def _numero(valor):
     try:
         return float(valor)
     except (TypeError, ValueError):
         return 0.0
-
-
-def _nome_produto(item, produtos_por_id):
-    nome = _valor(item, "nomeProduto", "nome_produto", "produto")
-    if isinstance(nome, dict):
-        nome = _valor(nome, "nome", "descricao")
-    if nome:
-        return str(nome)
-    produto_id = item.get("produtoId")
-    if produto_id is not None:
-        produto = produtos_por_id.get(str(produto_id))
-        if produto:
-            return str(_valor(produto, "nome", "descricao") or "Produto")
-    return "Produto sem nome"
 
 
 @dashboard_bp.get("/dashboard")
@@ -135,121 +89,97 @@ def arquivos_dashboard(arquivo):
 
 @dashboard_bp.get("/api/dashboard")
 def dados_dashboard():
+    ano_texto = request.args.get("ano", "2026")
     try:
-        orcamentos = list(orcamentos_collection.find({}, {
-            "data_orcamento": 1, "data_criacao": 1, "dataOrcamento": 1,
-            "criado_em": 1, "itens": 1,
-            "status": 1, "situacao": 1, "estado_orcamento": 1,
-            "valor_final": 1, "valor_total": 1, "valor_potencial": 1,
-            "categoria": 1, "estado": 1, "uf": 1, "regiao": 1,
-            "percentual_desperdicio": 1, "desperdicio_percentual": 1,
-            "desperdicio": 1, "orcamentoId": 1, "clienteId": 1,
-        }))
-        itens = list(itens_orcamento_collection.find({}, {
-            "produtoId": 1, "orcamentoId": 1, "produto": 1,
-            "nomeProduto": 1, "nome_produto": 1, "quantidade": 1,
-            "subtotal": 1, "categoria": 1,
-        }))
-        produtos = list(produtos_collection.find({}, {"nome": 1, "descricao": 1}))
-    except PyMongoError:
+        ano = int(ano_texto)
+    except ValueError:
+        return jsonify({"erro": "Ano inválido. Selecione um ano entre 2021 e 2026."}), 400
+    if ano < 2021 or ano > 2026:
+        return jsonify({"erro": "Ano inválido. Selecione um ano entre 2021 e 2026."}), 400
+
+    try:
+        pedidos = consultar(
+            """
+            SELECT status_orcamento, data_pedido, valor_orcado,
+                   valor_total_pedido, uf, nome_produto, categoria, unidades
+            FROM pedidos_historicos
+            WHERE data_pedido >= %s AND data_pedido < %s
+            """,
+            (date(ano, 1, 1), date(ano + 1, 1, 1)),
+        )
+    except WarehouseNotConfigured as erro:
+        return jsonify({"erro": str(erro)}), 503
+    except PsycopgError:
+        current_app.logger.exception("Falha ao consultar o dashboard no PostgreSQL.")
         return jsonify({
-            "erro": "Não foi possível consultar os dados do dashboard no MongoDB."
+            "erro": "Não foi possível consultar os dados analíticos no PostgreSQL."
         }), 503
+
+    pedidos = [
+        pedido for pedido in pedidos
+        if pedido.get("data_pedido") and pedido["data_pedido"].year == ano
+    ]
 
     total_fechados = 0
     total_negociacao = 0
     valor_potencial = 0.0
-    valores_desperdicio = []
-    mensal_fechados = [0] * 12
-    mensal_negociacao = [0] * 12
+    mensal_por_periodo = defaultdict(lambda: {"fechados": 0, "negociacao": 0})
+    por_produto = defaultdict(int)
     por_categoria = defaultdict(int)
     por_regiao = defaultdict(lambda: {"orcamentos": 0, "valor": 0.0})
-    orcamentos_por_id = {}
 
-    for orcamento in orcamentos:
-        identificador = orcamento.get("_id")
-        if identificador is not None:
-            orcamentos_por_id[str(identificador)] = orcamento
+    for pedido in pedidos:
+        status = _normalizar(pedido.get("status_orcamento"))
+        valor = _numero(pedido.get("valor_total_pedido") or pedido.get("valor_orcado"))
+        quando = pedido.get("data_pedido")
+        quantidade = int(_numero(pedido.get("unidades")) or 1)
+        categoria = pedido.get("categoria")
+        nome_produto = pedido.get("nome_produto")
 
-        situacao = _classificar(orcamento)
-        valor = _numero(_valor(
-            orcamento, "valor_final", "valor_total", "valor_potencial"
-        ))
-        quando = _data(orcamento)
-        if situacao == "fechado":
-            total_fechados += 1
-            if quando:
-                mensal_fechados[quando.month - 1] += 1
-            desperdicio = _valor(
-                orcamento, "percentual_desperdicio",
-                "desperdicio_percentual", "desperdicio",
-            )
-            if desperdicio is not None:
-                valores_desperdicio.append(_numero(desperdicio))
-            else:
-                capacidade_total = 0
-                unidades_nao_utilizadas = 0
-                for item in orcamento.get("itens", []):
-                    aproveitamento = _numero(item.get("aproveitamento"))
-                    folhas = _numero(item.get("qtde_folhas"))
-                    quantidade = _numero(item.get("quantidade"))
-                    capacidade = aproveitamento * folhas
-                    if capacidade > 0:
-                        capacidade_total += capacidade
-                        unidades_nao_utilizadas += max(0, capacidade - quantidade)
-                if capacidade_total:
-                    valores_desperdicio.append(
-                        100 * unidades_nao_utilizadas / capacidade_total
-                    )
-        elif situacao == "negociacao":
-            total_negociacao += 1
-            valor_potencial += valor
-            if quando:
-                mensal_negociacao[quando.month - 1] += 1
+        if nome_produto:
+            por_produto[str(nome_produto)] += quantidade
+        if categoria:
+            por_categoria[str(categoria)] += quantidade
 
-        uf = _sigla_estado(_valor(orcamento, "uf", "estado", "regiao"))
+        uf = _sigla_estado(pedido.get("uf"))
         if uf:
             agregado = por_regiao[uf]
             agregado["orcamentos"] += 1
             agregado["valor"] += valor
 
-    produtos_por_id = {str(produto["_id"]): produto for produto in produtos}
-    por_produto = defaultdict(int)
-    itens_dashboard = list(itens)
-    for orcamento in orcamentos:
-        for item in orcamento.get("itens", []):
-            itens_dashboard.append({
-                **item,
-                "orcamentoId": str(orcamento.get("_id", "")),
-                "categoria": item.get("categoria") or orcamento.get("categoria"),
+        if status in STATUS_FECHADOS:
+            total_fechados += 1
+            if quando:
+                mensal_por_periodo[(quando.year, quando.month)]["fechados"] += 1
+        elif status in STATUS_NEGOCIACAO:
+            total_negociacao += 1
+            valor_potencial += _numero(pedido.get("valor_orcado"))
+            if quando:
+                mensal_por_periodo[(quando.year, quando.month)]["negociacao"] += 1
+
+    serie_mensal = []
+    if mensal_por_periodo:
+        ano, mes = min(mensal_por_periodo)
+        ultimo_ano, ultimo_mes = max(mensal_por_periodo)
+        while (ano, mes) <= (ultimo_ano, ultimo_mes):
+            dados_mes = mensal_por_periodo[(ano, mes)]
+            serie_mensal.append({
+                "periodo": f"{ano:04d}-{mes:02d}",
+                **dados_mes,
             })
-    for item in itens_dashboard:
-        nome = _nome_produto(item, produtos_por_id)
-        quantidade = item.get("quantidade")
-        quantidade = int(_numero(quantidade)) if quantidade is not None else 1
-        por_produto[nome] += quantidade
-        categoria = item.get("categoria")
-        if not categoria:
-            orcamento = orcamentos_por_id.get(str(item.get("orcamentoId")))
-            categoria_orcamento = _valor(orcamento or {}, "categoria")
-            categoria = categoria_orcamento or item.get("produto")
-        if categoria:
-            por_categoria[str(categoria)] += quantidade
+            mes += 1
+            if mes == 13:
+                ano += 1
+                mes = 1
 
     return jsonify({
         "indicadores": {
             "orcamentos_fechados": total_fechados,
-            "media_desperdicio": (
-                sum(valores_desperdicio) / len(valores_desperdicio)
-                if valores_desperdicio else None
-            ),
+            "media_desperdicio": MEDIA_DESPERDICIO_POR_ANO[ano],
             "pedidos_negociacao": total_negociacao,
             "valor_negociacao": round(valor_potencial, 2),
         },
-        "mensal": {
-            "fechados": mensal_fechados,
-            "negociacao": mensal_negociacao,
-        },
+        "mensal": serie_mensal,
         "produtos": [
             {"nome": nome, "quantidade": quantidade}
             for nome, quantidade in sorted(

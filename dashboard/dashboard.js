@@ -1,8 +1,6 @@
-const MONTHS = [
-    "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-    "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
-];
 const COLORS = ["#a82d48", "#dc8588", "#e99ca4", "#bf394d", "#e98071", "#e5a04e", "#df73b0", "#9c778b"];
+let dashboardRequestId = 0;
+let mapGeometry;
 const UF_POR_CODAREA = {
     11: "RO", 12: "AC", 13: "AM", 14: "RR", 15: "PA", 16: "AP", 17: "TO",
     21: "MA", 22: "PI", 23: "CE", 24: "RN", 25: "PB", 26: "PE", 27: "AL",
@@ -37,53 +35,92 @@ function escapeXml(value) {
     })[character]);
 }
 
-function renderMonthly(data) {
+function renderMonthly(data, reportYear = 2026) {
     const svg = document.querySelector("#chart-monthly");
-    const closed = data.fechados || [];
-    const negotiation = data.negociacao || [];
-    const values = [...closed, ...negotiation].map(number);
+    const dataByPeriod = new Map(
+        (data || [])
+            .filter(item => item.periodo.startsWith(`${reportYear}-`))
+            .map(item => [item.periodo, item]),
+    );
+    const months = Array.from({ length: 12 }, (_, index) => {
+        const month = String(index + 1).padStart(2, "0");
+        const periodo = `${reportYear}-${month}`;
+        const item = dataByPeriod.get(periodo);
+        return {
+            periodo,
+            fechados: item ? number(item.fechados) : null,
+            negociacao: item ? number(item.negociacao) : null,
+        };
+    });
+    const closed = months.map(item => item.fechados);
+    const negotiation = months.map(item => item.negociacao);
+    const values = [...closed, ...negotiation].filter(value => value !== null);
     if (!values.some(Boolean)) {
         showEmpty(svg);
         return;
     }
 
-    const width = 950;
-    const height = 260;
-    const margin = { top: 48, right: 43, bottom: 36, left: 50 };
+    const height = 230;
+    const margin = { top: 38, right: 24, bottom: 42, left: 52 };
+    const width = 900;
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.style.width = "100%";
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
-    const x = index => margin.left + (index / (MONTHS.length - 1)) * plotWidth;
-    const y = (value, max) => margin.top + plotHeight - (number(value) / max) * plotHeight;
+    const x = index => margin.left
+        + (index / Math.max(1, months.length - 1)) * plotWidth;
+    const maxValue = Math.max(1, ...values);
+    const tickSize = 10 ** Math.floor(Math.log10(maxValue / 4));
+    const max = Math.ceil(maxValue / tickSize) * tickSize;
+    const y = value => margin.top + plotHeight - (number(value) / max) * plotHeight;
 
     const grid = Array.from({ length: 5 }, (_, index) => {
         const lineY = margin.top + (index / 4) * plotHeight;
-        const leftValue = (4 - index) * 2.5;
-        const rightValue = (4 - index) * 5 + 5;
-        const leftLabel = index % 2 === 0
-            ? `<text class="chart-label" x="${margin.left - 10}" y="${lineY + 4}" text-anchor="end">${leftValue}</text>`
-            : "";
+        const label = Math.round(max * (4 - index) / 4);
         return `<line class="grid-line" x1="${margin.left}" y1="${lineY}" x2="${width - margin.right}" y2="${lineY}"/>
-            ${leftLabel}
-            <text class="chart-label" x="${width - margin.right + 10}" y="${lineY + 4}">${rightValue}</text>`;
+            <text class="chart-label" x="${margin.left - 9}" y="${lineY + 4}" text-anchor="end">${label}</text>`;
     }).join("");
-    const monthLabels = MONTHS.map((month, index) =>
-        `<text class="chart-label" x="${x(index)}" y="${height - 12}" text-anchor="middle">${month}</text>`
-    ).join("");
+    const monthLabels = months.map((item, index) => {
+        const [year, month] = item.periodo.split("-").map(Number);
+        const monthLabel = new Intl.DateTimeFormat("pt-BR", {
+            month: "short",
+            timeZone: "UTC",
+        }).format(new Date(Date.UTC(year, month - 1, 1))).replace(/\.$/, "");
+        const monthText = `<text class="chart-label" x="${x(index)}" y="${height - 19}"
+                text-anchor="middle">${monthLabel}</text>`;
+        const yearText = month === 1
+            ? `<text class="chart-year-label" x="${x(index)}" y="${height - 3}"
+                text-anchor="middle">${year}</text>`
+            : "";
+        return `${monthText}${yearText}`;
+    }).join("");
     const series = [
-        { values: negotiation, color: COLORS[0], label: "Orçamentos Em Negociação", max: 12 },
-        { values: closed, color: COLORS[1], label: "Orçamentos Fechados", max: 25 },
+        { values: negotiation, color: COLORS[0], label: "Orçamentos em negociação" },
+        { values: closed, color: COLORS[1], label: "Orçamentos fechados" },
     ];
     const lines = series.map(item => {
-        const points = MONTHS.map((_, index) => `${x(index)},${y(item.values[index], item.max)}`).join(" ");
-        const dots = MONTHS.map((month, index) => {
-            const pointY = y(item.values[index], item.max);
-            return `<rect x="${x(index) - 3.5}" y="${pointY - 3.5}" width="7" height="7"
-                    transform="rotate(45 ${x(index)} ${pointY})" fill="${item.color}">
-                <title>${month}: ${item.values[index] || 0} ${item.label.toLowerCase()}</title>
-            </rect>`;
+        const points = item.values
+            .map((value, index) => value === null ? null : `${x(index)},${y(value)}`)
+            .filter(Boolean)
+            .join(" ");
+        const dots = months.flatMap((month, index) => {
+            if (item.values[index] === null) {
+                return [];
+            }
+            const pointY = y(item.values[index]);
+            const description =
+                `${month.periodo}: ${item.values[index]} ${item.label.toLowerCase()}`;
+            return [`<circle class="chart-hit-area" cx="${x(index)}" cy="${pointY}" r="8">
+                <title>${escapeXml(description)}</title>
+            </circle>
+            <circle cx="${x(index)}" cy="${pointY}" r="2.5" fill="${item.color}"
+                pointer-events="none"/>`];
         }).join("");
-        return `<polyline points="${points}" fill="none" stroke="${item.color}" stroke-width="3"
-                    stroke-linecap="round" stroke-linejoin="round"/>${dots}`;
+        const line = points
+            ? `<polyline points="${points}" fill="none" stroke="${item.color}" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round"/>`
+            : "";
+        return `${line}${dots}`;
     }).join("");
     const legend = series.map((item, index) => {
         const xPosition = index === 0 ? 8 : 211;
@@ -117,9 +154,11 @@ function renderProducts(products) {
         const label = fullLabel.length > 17 ? `${fullLabel.slice(0, 16)}…` : fullLabel;
         const width = (number(item.quantidade) / max) * barWidth;
         return `<text class="chart-label" x="4" y="${y + 13}">${label}</text>
-            <rect x="145" y="${y}" width="${barWidth}" height="18" fill="#ffffff"/>
+            <rect x="145" y="${y}" width="${barWidth}" height="18" fill="#ffffff">
+                <title>${escapeXml(`${fullLabel}: ${item.quantidade} unidades`)}</title>
+            </rect>
             <rect x="145" y="${y}" width="${width}" height="18" fill="#d65d70">
-                <title>${fullLabel}: ${item.quantidade}</title>
+                <title>${escapeXml(`${fullLabel}: ${item.quantidade} unidades`)}</title>
             </rect>`;
     }).join("");
     const axisY = 8 + top.length * rowHeight + 4;
@@ -195,7 +234,7 @@ function renderCategories(categories) {
         const anchor = segment.side === "right" ? "start" : "end";
         const value = number(segment.item.quantidade);
         return `<path d="${segment.path}" fill="${COLORS[segment.index + 2]}" stroke="#fff" stroke-width="2">
-                <title>${segment.item.nome}: ${value}</title>
+                <title>${escapeXml(`${segment.item.nome}: ${value} unidades (${segment.percentage}%)`)}</title>
             </path>
             <polyline points="${edgeX},${edgeY} ${lineX},${segment.labelY - 3} ${labelX},${segment.labelY - 3}"
                 fill="none" stroke="#c9c5c7" stroke-width="1"/>
@@ -286,7 +325,7 @@ function setIndicators(indicators) {
         indicators.orcamentos_fechados ?? "—";
     document.querySelector("#kpi-waste").textContent =
         indicators.media_desperdicio == null
-            ? "—"
+            ? "N/D"
             : `${new Intl.NumberFormat("pt-BR", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -304,41 +343,60 @@ function setIndicators(indicators) {
 
 async function loadDashboard() {
     const status = document.querySelector("#status");
+    const requestId = ++dashboardRequestId;
+    const year = Number(document.querySelector("#year-filter").value);
     try {
-        const response = await fetch("/api/dashboard", {
+        const response = await fetch(`/api/dashboard?ano=${year}`, {
             headers: { Accept: "application/json" },
         });
         const data = await response.json();
         if (!response.ok) {
             throw new Error(data.erro || "Falha ao carregar os indicadores.");
         }
+        if (requestId !== dashboardRequestId) {
+            return;
+        }
         setIndicators(data.indicadores);
-        renderMonthly(data.mensal);
+        renderMonthly(data.mensal, year);
         renderProducts(data.produtos);
         renderCategories(data.categorias);
 
         try {
-            const mapResponse = await fetch("/dashboard/assets/brazil-states.geojson", {
-                headers: { Accept: "application/geo+json, application/json" },
-            });
-            const geojson = await mapResponse.json();
-            if (!mapResponse.ok) {
-                throw new Error("Não foi possível carregar a geometria do mapa.");
+            if (!mapGeometry) {
+                const mapResponse = await fetch("/dashboard/assets/brazil-states.geojson", {
+                    headers: { Accept: "application/geo+json, application/json" },
+                });
+                mapGeometry = await mapResponse.json();
+                if (!mapResponse.ok) {
+                    mapGeometry = null;
+                    throw new Error("Não foi possível carregar a geometria do mapa.");
+                }
             }
-            if (!Array.isArray(geojson.features)) {
+            if (!Array.isArray(mapGeometry.features)) {
                 throw new Error("A geometria do mapa está em um formato inválido.");
             }
-            renderRegions(data.regioes, geojson);
+            if (requestId !== dashboardRequestId) {
+                return;
+            }
+            renderRegions(data.regioes, mapGeometry);
         } catch (error) {
+            if (requestId !== dashboardRequestId) {
+                return;
+            }
             showEmpty(document.querySelector("#chart-regions"), "Mapa indisponível");
             status.textContent = error.message || "Não foi possível carregar o mapa.";
         }
     } catch (error) {
+        if (requestId !== dashboardRequestId) {
+            return;
+        }
         status.textContent = error.message || "Não foi possível carregar os dados.";
         [".visual-line svg", ".visual-products svg", ".visual-categories svg"]
             .forEach(selector => showEmpty(document.querySelector(selector), "Dados indisponíveis"));
         showEmpty(document.querySelector("#chart-regions"), "Dados indisponíveis");
     }
 }
+
+document.querySelector("#year-filter").addEventListener("change", () => loadDashboard());
 
 loadDashboard();

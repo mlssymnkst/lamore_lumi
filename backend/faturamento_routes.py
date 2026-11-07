@@ -8,11 +8,13 @@ Rotas:
 Sem pandas: só biblioteca padrão, para o deploy ficar leve.
 """
 import os
-import random
 import unicodedata
-from datetime import date, timedelta
+from datetime import date
 
-from flask import Blueprint, abort, jsonify, request, send_from_directory
+from flask import Blueprint, abort, current_app, jsonify, request, send_from_directory
+from psycopg2 import Error as PsycopgError
+
+from backend.warehouse import WarehouseNotConfigured, consultar
 
 faturamento_bp = Blueprint("faturamento", __name__)
 
@@ -27,54 +29,32 @@ ESTADOS_BR = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT",
               "RR", "SC", "SP", "SE", "TO"]
 
 
-# ---------------------------------------------------------------------------
-# DADOS (fictícios). Para usar dados reais, troque SOMENTE carregar_pedidos():
-# ela deve devolver uma lista de dicts com as chaves
-# pedido, cliente, categoria, valor (float), data (datetime.date), status, uf
-# ---------------------------------------------------------------------------
-_PEDIDOS_BASE = [
-    (1, "Cliente 1", "Categoria 1", 200.00, "2026-01-01", "Pago", "SP"),
-    (2, "Cliente 2", "Categoria 2", 470.00, "2026-01-15", "Pendente", "RJ"),
-    (3, "Cliente 3", "Categoria 3", 9200.00, "2026-02-05", "Cancelado", "MG"),
-    (4, "Cliente 4", "Categoria 4", 10.00, "2026-02-20", "Pago", "SP"),
-    (5, "Cliente 5", "Categoria 5", 1000.00, "2026-03-01", "Pendente", "PR"),
-]
-
-
-def _gerar_pedidos_ficticios(qtd=100, primeiro_numero=6, ano=2026, semente=42):
-    """Pedidos de exemplo. A semente fixa mantém os mesmos dados a cada execução."""
-    rng = random.Random(semente)
-    categorias = ["Convites", "Save the date", "Cardápios", "Marcadores de mesa",
-                  "Tags e lacres", "Caixas personalizadas", "Papelaria de cerimônia"]
-    status = ["Pago", "Pendente", "Cancelado", "Atrasado"]
-    pesos_status = [55, 20, 10, 15]
-    pesos_uf = {"SP": 10, "RJ": 7, "MG": 7, "PR": 5, "RS": 5, "SC": 4, "BA": 4}
-    pesos = [pesos_uf.get(uf, 1.5) for uf in ESTADOS_BR]
-    pedidos = []
-    for i in range(qtd):
-        # os 27 primeiros percorrem todos os estados: o mapa tem número em cada um
-        uf = ESTADOS_BR[i] if i < len(ESTADOS_BR) else rng.choices(ESTADOS_BR, weights=pesos)[0]
-        n = primeiro_numero + i
-        pedidos.append({
-            "pedido": n, "cliente": f"Cliente {n}", "categoria": rng.choice(categorias),
-            "valor": round(min(max(rng.lognormvariate(6.3, 0.8), 60), 9500), 2),
-            "data": date(ano, 1, 1) + timedelta(days=rng.randrange(365)),
-            "status": rng.choices(status, weights=pesos_status)[0], "uf": uf,
-        })
-    return pedidos
-
-
-_cache = {}
-
-
 def carregar_pedidos():
-    """PONTO DE TROCA: aqui entra a consulta ao banco quando houver dados reais."""
-    if "pedidos" not in _cache:
-        base = [{"pedido": n, "cliente": c, "categoria": cat, "valor": v,
-                 "data": date.fromisoformat(d), "status": s, "uf": uf}
-                for (n, c, cat, v, d, s, uf) in _PEDIDOS_BASE]
-        _cache["pedidos"] = base + _gerar_pedidos_ficticios(100)
-    return _cache["pedidos"]
+    """Carrega pedidos históricos do data warehouse, sem dados de identificação pessoal."""
+    registros = consultar(
+        """
+        SELECT num_pedido AS pedido,
+               'Cliente ' || num_pedido AS cliente,
+               COALESCE(categoria, 'Outros') AS categoria,
+               COALESCE(valor_total_pedido, valor_orcado, 0)::float AS valor,
+               data_pedido AS data,
+               COALESCE(status_orcamento, 'Não informado') AS status,
+               COALESCE(uf, '') AS uf,
+               COALESCE(dias_atraso_frete, 0) > 0 AS atrasado
+        FROM pedidos_historicos
+        WHERE data_pedido IS NOT NULL
+        """
+    )
+    return [
+        {
+            **registro,
+            "data": registro["data"],
+            "status": str(registro["status"]).strip().title(),
+            "uf": str(registro["uf"]).strip().upper(),
+            "valor": float(registro["valor"] or 0),
+        }
+        for registro in registros
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -125,8 +105,13 @@ def arquivos_faturamento(arquivo):
 
 @faturamento_bp.route("/api/faturamento")
 def api_faturamento():
-    pedidos = [{**p, "status": str(p["status"]).strip().title(),
-                "uf": str(p["uf"]).strip().upper()} for p in carregar_pedidos()]
+    try:
+        pedidos = carregar_pedidos()
+    except WarehouseNotConfigured as erro:
+        return jsonify({"erro": str(erro)}), 503
+    except PsycopgError:
+        current_app.logger.exception("Falha ao consultar o faturamento no PostgreSQL.")
+        return jsonify({"erro": "Não foi possível consultar os pedidos históricos."}), 503
 
     anos = sorted({p["data"].year for p in pedidos}, reverse=True)
     ano = request.args.get("ano", type=int)
@@ -149,8 +134,8 @@ def api_faturamento():
         por_uf[p["uf"]] = por_uf.get(p["uf"], 0) + p["valor"]
     cards = {
         "total_pedidos": len(filtrados),
-        "atrasados": sum(1 for p in filtrados if p["status"] == "Atrasado"),
-        "pendentes": sum(1 for p in filtrados if p["status"] == "Pendente"),
+        "atrasados": sum(1 for p in filtrados if p["atrasado"]),
+        "pendentes": sum(1 for p in filtrados if normalizar(p["status"]) == "em negociacao"),
         "faturamento_total": round(sum(p["valor"] for p in filtrados), 2),
         "estado_maior": max(por_uf, key=por_uf.get) if por_uf else "—",
     }
