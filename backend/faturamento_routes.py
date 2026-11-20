@@ -21,7 +21,12 @@ faturamento_bp = Blueprint("faturamento", __name__)
 PASTA_PAGINA = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "faturamento"))
 # Só estes arquivos saem da pasta (impede baixar código-fonte por engano)
-ARQUIVOS_PUBLICOS = {"faturamento.css", "faturamento.js"}
+ARQUIVOS_PUBLICOS = {
+    "faturamento.css",
+    "faturamento.js",
+    "ruptura-estoque.css",
+    "ruptura-estoque.js"
+}
 
 TODOS = "Todos"
 ESTADOS_BR = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT",
