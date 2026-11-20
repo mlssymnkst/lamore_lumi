@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faturamento L'amore</title>
     <link rel="icon" type="image/png" href="/images/logo%20redondo.png">
-
+    <link rel="stylesheet" href="/faturamento/ruptura-estoque.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
@@ -141,9 +141,66 @@
                 </div>
             </section>
         </div>
+
+       
+            
+        <!-- ════════ INTELIGÊNCIA DE ESTOQUE — LUMI ════════ -->
+        <section id="lumi-ruptura" aria-label="Previsão de ruptura de estoque LUMI">
+            <div class="lumi-heading">
+                <div>
+                    <div class="lumi-eyebrow">LUMI · INTELIGÊNCIA DE ESTOQUE</div>
+                    <h2>Previsão de demanda e risco de ruptura</h2>
+                    <p>Rede neural MLP · próximos 28 dias · componentes de kits · pedidos aprovados</p>
+                </div>
+                <span class="lumi-tag">Estoque simulado</span>
+            </div>
+
+            <div class="lumi-indicadores">
+                <article class="lumi-kpi"><span>Componentes analisados</span><strong id="lumi-total">—</strong><small>Materiais e itens utilizados nos pedidos</small></article>
+                <article class="lumi-kpi"><span>Componentes em risco</span><strong id="lumi-risco">—</strong><small>Risco alto ou crítico</small></article>
+                <article class="lumi-kpi"><span>Reposição sugerida</span><strong id="lumi-reposicao">—</strong><small>Unidades no cenário simulado</small></article>
+            </div>
+
+            <div class="lumi-painel">
+                <div class="lumi-painel-topo">
+                    <div><h3>Estoque projetado sem reposição</h3><p id="lumi-legenda">Selecione um componente para visualizar os próximos 28 dias.</p></div>
+                    <label class="lumi-seletor-label">Componente
+                        <select id="lumi-produto" aria-label="Selecionar componente"></select>
+                    </label>
+                </div>
+                <div class="lumi-controles">
+                    <label class="lumi-seletor-label">Cenário ilustrativo
+                        <select id="lumi-cenario" aria-label="Cenário de estoque">
+                            <option value="1">Estoque configurado (100%)</option>
+                            <option value="0.5">Estoque reduzido (50%)</option>
+                            <option value="0.25">Estoque crítico (25%)</option>
+                        </select>
+                    </label>
+                    <label class="lumi-seletor-label">Venda extra simulada (unidades)
+                        <input id="lumi-venda-extra" type="number" min="0" step="1" value="0" aria-label="Venda extra simulada do componente">
+                    </label>
+                </div>
+                <p class="lumi-explainer">A venda extra pode representar um item individual <strong>ou</strong> um kit que contenha esse componente (assumindo 1 unidade por kit).</p>
+                <div id="lumi-grafico" role="img" aria-label="Gráfico de evolução projetada do estoque"></div>
+                <div id="lumi-origens" class="lumi-origens" aria-live="polite"></div>
+            </div>
+
+            <div class="lumi-painel">
+                <h3>Prioridades de reposição</h3>
+                <p id="lumi-aviso" class="lumi-nota">Carregando previsões...</p>
+                <div class="lumi-tabela-scroll">
+                    <table class="lumi-tabela">
+                        <thead><tr><th>Componente</th><th>Previsão 28d</th><th>Estoque inicial</th><th>Ponto de reposição</th><th>Dia de alerta</th><th>Dia de ruptura</th><th>Risco</th><th>Reposição</th></tr></thead>
+                        <tbody id="lumi-tabela"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
     </main>
 
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="/faturamento/faturamento.js"></script>
+    <script src="/faturamento/ruptura-estoque.js" defer></script>
 </body>
 </html>
