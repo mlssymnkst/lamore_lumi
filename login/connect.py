@@ -22,6 +22,10 @@ app.register_blueprint(bot_bp)
 from backend.faturamento_routes import faturamento_bp
 app.register_blueprint(faturamento_bp)
 
+# LUMI: API de previsoes usada pelo painel Faturamento
+from backend.lumi_routes import lumi_bp
+app.register_blueprint(lumi_bp)
+
 from backend.dashboard_routes import dashboard_bp
 app.register_blueprint(dashboard_bp)
 
